@@ -264,7 +264,7 @@ private:
         if (ptr != last) {
             std::move_backward(ptr, last, last + 1);
         }
-        *ptr = std::forward<ValType>(value);
+        *ptr = std::move(value);
         ++size_;
         return ptr;
     }
