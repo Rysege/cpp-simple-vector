@@ -1,6 +1,5 @@
 #include "simple_vector.h"
 
-#include <cassert>
 #include <iostream>
 #include <numeric>
 #include <string>
