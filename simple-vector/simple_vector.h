@@ -32,14 +32,19 @@ public:
     SimpleVector() noexcept = default;
 
     // Создаёт вектор из size элементов, инициализированных значением по умолчанию
-    explicit SimpleVector(size_t size) : SimpleVector(size, Type()) {}
+    explicit SimpleVector(size_t size)
+        : data_(size)
+        , capacity_(size)
+        , size_(size) {
+        std::generate(begin(), end(), []() {return Type(); });
+    }
 
     // Создаёт вектор из size элементов, инициализированных значением value
     SimpleVector(size_t size, const Type& value)
         : data_(size)
         , capacity_(size)
         , size_(size) {
-        std::fill_n(begin(), size_, value);
+        std::fill_n(begin(), size, value);
     }
 
     // Создаёт вектор из std::initializer_list
@@ -51,8 +56,8 @@ public:
     }
 
     SimpleVector(const SimpleVector& other)
-        : data_(other.capacity_)
-        , capacity_(other.capacity_)
+        : data_(other.size_)
+        , capacity_(other.size_)
         , size_(other.size_) {
         std::copy(other.begin(), other.end(), data_.Get());
     }
@@ -134,10 +139,7 @@ public:
             Reserve(CalculateNewCapacity(new_size));
         }
         if (new_size > size_) {
-            const auto last = begin() + new_size;
-            for (auto pos = end(); pos != last; ++pos) {
-                *pos = Type();
-            }
+            std::generate(end(), begin() + new_size, []() {return Type(); });
         }
         size_ = new_size;
     }
@@ -182,13 +184,13 @@ public:
 
     // "Удаляет" последний элемент вектора. Вектор не должен быть пустым
     void PopBack() noexcept {
-        if (size_) {
-            --size_;
-        }
+        assert(size_ != 0);
+        --size_;
     }
 
     // Удаляет элемент вектора в указанной позиции
     Iterator Erase(ConstIterator pos) {
+        assert(pos >= begin() && pos < end());
         const auto ptr = Iterator(pos);
         if (size_) {
             std::move(ptr + 1, end(), ptr);
@@ -246,9 +248,6 @@ private:
     size_t size_ = 0;
 
     size_t CalculateNewCapacity(const size_t new_size) const {
-        if (SIZE_MAX - capacity_ < capacity_) {
-            return SIZE_MAX;
-        }
         return std::max(new_size, capacity_ * 2);
     }
 
@@ -264,7 +263,7 @@ private:
         if (ptr != last) {
             std::move_backward(ptr, last, last + 1);
         }
-        *ptr = std::move(value);
+        *ptr = std::forward<ValType>(value);
         ++size_;
         return ptr;
     }
